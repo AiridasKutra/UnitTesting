@@ -2,110 +2,66 @@ package tests;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.Scanner;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.AfterAll;
-
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
-import validators.PasswordValidator;
-
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PasswordValidatorUnitTests
 {
-	@BeforeEach
+	private PasswordValidator validator;
+	
+	@BeforeAll
 	void setUp()
 	{
-		
-	}
-
-	@AfterEach
-	void tearDown()
-	{
-		
+		validator = new PasswordValidator(8, "!@#$%^&*()_-=+");
 	}
 	
 	@Test
-	void validateLength_has8needs10()
+	void testValidPassword()
 	{
-		String password = "password";
-		boolean result = PasswordValidator.validateLength(password, 10);
-		assertFalse(result);
-	}
-	
-	@Test
-	void validateLength_has6needs6()
-	{
-		String password = "paswrd";
-		boolean result = PasswordValidator.validateLength(password, 6);
+		String password = "Password123!@#$%";
+		boolean result = validator.validatePassword(password);
 		assertTrue(result);
 	}
 	
 	@Test
-	void hasUppercase_pass()
+	void testInvalidPassword_insufficientLength()
 	{
-		String password = "Password";
-		boolean result = PasswordValidator.hasUppercase(password);
-		assertTrue(result);
-	}
-	
-	@Test
-	void hasUppercase_fail()
-	{
-		String password = "password";
-		boolean result = PasswordValidator.hasUppercase(password);
+		String password = "Pa123!";
+		boolean result = validator.validatePassword(password);
 		assertFalse(result);
 	}
 	
 	@Test
-	void hasSpecialSymbols_pass()
+	void testInvalidPassword_noUppercase()
 	{
-		String specialChars = loadSpecialChars();
-		
-		for (int i = 0; i < specialChars.length(); i++)
-		{
-			String password = "pass" + specialChars.charAt(i);
-			boolean result = PasswordValidator.hasSpecialSymbols(password);
-			assertTrue(result);
-		}
-		
-	}
-	
-	@Test
-	void hasSpecialSymbols_fail()
-	{
-		String password = "password";
-		boolean result = PasswordValidator.hasSpecialSymbols(password);
+		String password = "password123!@#$%";
+		boolean result = validator.validatePassword(password);
 		assertFalse(result);
 	}
 	
-	private String loadSpecialChars()
+	@Test
+	void testInvalidPassword_noLowercase()
 	{
-		String specialChars = "";
-		
-		try
-		{
-		    File file = new File("special-password-symbols.txt");
-		    Scanner myReader = new Scanner(file);
-		    if (myReader.hasNextLine())
-		    {
-		    	specialChars = myReader.nextLine();
-		    }
-		    else
-		    {
-		    	fail("Empty password configuration file");
-		    }
-		    myReader.close();
-		}
-		catch (FileNotFoundException e)
-		{
-			fail("Password configuration file missing");
-		}
-		
-		return specialChars;
+		String password = "PASSWORD123!@#$%";
+		boolean result = validator.validatePassword(password);
+		assertFalse(result);
+	}
+	
+	@Test
+	void testInvalidPassword_noNumbers()
+	{
+		String password = "Password!@#$%";
+		boolean result = validator.validatePassword(password);
+		assertFalse(result);
+	}
+	
+	@Test
+	void testInvalidPassword_noSpecialChars()
+	{
+		String password = "Password123<>";
+		boolean result = validator.validatePassword(password);
+		assertFalse(result);
 	}
 }

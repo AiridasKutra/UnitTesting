@@ -2,111 +2,63 @@ package tests;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
-import validators.PhoneNumberValidator;
-
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PhoneNumberValidatorUnitTests
 {
-	private class PhoneNumberInfo
-	{
-		public String code;
-		public String trunkPrefix;
-		public int length;
-		public String alpha3code;
-	}
+	private PhoneNumberValidator validator;
 	
-	@BeforeEach
+	@BeforeAll
 	void setUp()
 	{
-		
+		validator = new PhoneNumberValidator();
+		CountryPhoneNumberDesc ltuPhoneNumber = new CountryPhoneNumberDesc();
+		ltuPhoneNumber.code = "+370";
+		ltuPhoneNumber.trunkPrefix = "8";
+		ltuPhoneNumber.length = 8;
+		ltuPhoneNumber.alpha3code = "ltu";
+		validator.addCountryDesc(ltuPhoneNumber);
 	}
-
-	@AfterEach
-	void tearDown()
-	{
-		
-	}
-
+	
 	@Test
-	void hasOnlyNumbers_pass()
-	{
-		String number = "123456789";
-		boolean result = PhoneNumberValidator.hasOnlyNumbers(number);
-		assertTrue(result);
-	}
-
-	@Test
-	void hasOnlyNumbers_fail()
-	{
-		String number = "I234SG789";
-		boolean result = PhoneNumberValidator.hasOnlyNumbers(number);
-		assertFalse(result);
-	}
-
-	@Test
-	void applyCountryCode()
+	void testValidNumber()
 	{
 		String number = "823456789";
-		String result = PhoneNumberValidator.applyCountryCode(number, "ltu");
+		String result = validator.validateNumber(number, "ltu");
 		assertEquals(result, "+37023456789");
 	}
 	
-	ArrayList<PhoneNumberInfo> loadNumberInfo()
+	@Test
+	void testInvalidNumber_hasOtherCharacters()
 	{
-		ArrayList<PhoneNumberInfo> info = new ArrayList<PhoneNumberInfo>();
-		
-		try
-		{
-		    File file = new File("phone-number-country-codes.txt");
-		    Scanner myReader = new Scanner(file);
-		    boolean firstLineRead = false;
-		    while (myReader.hasNextLine())
-		    {
-		    	String line = myReader.nextLine();
-		    	if (!firstLineRead)
-		    	{
-		    		firstLineRead = true;
-		    		continue;
-		    	}
-		    	
-		    	String[] parts = line.split(" ", 4);
-		    	if (parts.length != 4)
-		    	{
-		    		continue;
-		    	}
-		    	
-		    	PhoneNumberInfo numberInfo = new PhoneNumberInfo();
-		    	numberInfo.code = parts[0];
-		    	numberInfo.trunkPrefix = parts[1];
-		    	numberInfo.alpha3code = parts[3];
-		    	try
-		    	{
-		    	numberInfo.length = Integer.parseInt(parts[2]);
-		    	}
-		    	catch (NumberFormatException e)
-		    	{
-		    		continue;
-		    	}
-
-		    	info.add(numberInfo);
-		    }
-		    myReader.close();
-		}
-		catch (FileNotFoundException e)
-		{
-			fail("Password configuration file missing");
-		}
-		
-		return info;
+		String number = "+123bad456789";
+		String result = validator.validateNumber(number, "ltu");
+		assertNull(result);
 	}
-
+	
+	@Test
+	void testInvalidNumber_incorrectLength()
+	{
+		String number = "8234567890";
+		String result = validator.validateNumber(number, "ltu");
+		assertNull(result);
+	}
+	
+	@Test
+	void testValidNumber_latvia()
+	{
+		String number = "23456789";
+		CountryPhoneNumberDesc lvaPhoneNumber = new CountryPhoneNumberDesc();
+		lvaPhoneNumber.code = "+371";
+		lvaPhoneNumber.trunkPrefix = null;
+		lvaPhoneNumber.length = 8;
+		lvaPhoneNumber.alpha3code = "lva";
+		validator.addCountryDesc(lvaPhoneNumber);
+		
+		String result = validator.validateNumber(number, "lva");
+		assertEquals(result, "+37123456789");
+	}
 }

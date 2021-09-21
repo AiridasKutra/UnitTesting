@@ -1,3 +1,0 @@
-Format: code trunkprefix length alpha3code
-+370 8 8 ltu
-+371 null 8 lva
